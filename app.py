@@ -106,24 +106,16 @@ rabat_fc = (
 rabat = rabat_fc.geometry()
 
 # =========================
-# Fond Sentinel-2
+# Test image publique
 # =========================
-s2 = (
-    ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-    .filterBounds(rabat)
-    .filterDate(f"{annee}-01-01", f"{annee}-12-31")
-    .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 20))
-    .median()
-    .clip(rabat)
-)
+s2 = ee.Image("USGS/SRTMGL1_003").clip(rabat)
 
 s2_vis = {
     "min": 0,
-    "max": 3000,
-    "bands": ["B4", "B3", "B2"]
+    "max": 3000
 }
 
-s2_map = ee.Image(s2).getMapId(s2_vis)
+s2_map = s2.getMapId(s2_vis)
 s2_tile_url = s2_map["tile_fetcher"].url_format
 
 # =========================
