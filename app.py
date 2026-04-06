@@ -46,7 +46,6 @@ def initialize_earth_engine():
 
             credentials = ee.ServiceAccountCredentials(service_account_email, key_path)
             ee.Initialize(credentials=credentials, project=project_id)
-
         else:
             ee.Initialize(project=project_id)
 
@@ -88,7 +87,6 @@ annee = st.sidebar.selectbox(
 
 afficher_sentinel = st.sidebar.checkbox("Afficher le fond Sentinel-2", value=True)
 afficher_urbain = st.sidebar.checkbox("Afficher les zones urbaines", value=True)
-afficher_limite = st.sidebar.checkbox("Afficher la limite administrative", value=True)
 
 st.info(f"Zone sélectionnée : {zone_etude} | Année : {annee}")
 
@@ -106,20 +104,28 @@ rabat_fc = (
 rabat = rabat_fc.geometry()
 
 # =========================
-# Test image publique
+# Fond Sentinel-2
 # =========================
-s2 = ee.Image("USGS/SRTMGL1_003").clip(rabat)
+s2 = (
+    ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+    .filterBounds(rabat)
+    .filterDate(f"{annee}-01-01", f"{annee}-12-31")
+    .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 20))
+    .median()
+    .clip(rabat)
+)
 
 s2_vis = {
     "min": 0,
-    "max": 3000
+    "max": 3000,
+    "bands": ["B4", "B3", "B2"]
 }
 
 try:
     s2_map = s2.getMapId(s2_vis)
     s2_tile_url = s2_map["tile_fetcher"].url_format
 except Exception as e:
-    st.error("Erreur exacte sur getMapId")
+    st.error("Erreur sur le fond Sentinel-2")
     st.code(str(e))
     st.stop()
 
@@ -144,8 +150,13 @@ urban_vis = {
     "palette": ["red"]
 }
 
-urban_map = ee.Image(urban_mask).getMapId(urban_vis)
-urban_tile_url = urban_map["tile_fetcher"].url_format
+try:
+    urban_map = urban_mask.getMapId(urban_vis)
+    urban_tile_url = urban_map["tile_fetcher"].url_format
+except Exception as e:
+    st.error("Erreur sur la couche des zones urbaines")
+    st.code(str(e))
+    st.stop()
 
 # =========================
 # Surface urbaine estimée
@@ -162,18 +173,6 @@ urban_area_ha_value = urban_area_ha.getInfo()
 
 if urban_area_ha_value is None:
     urban_area_ha_value = 0.0
-
-# =========================
-# Limite administrative
-# =========================
-boundary_image = ee.Image().byte().paint(
-    featureCollection=rabat_fc,
-    color=1,
-    width=3
-)
-
-boundary_map = boundary_image.getMapId({"palette": ["yellow"]})
-boundary_tile_url = boundary_map["tile_fetcher"].url_format
 
 # =========================
 # Carte Folium
@@ -204,16 +203,6 @@ if afficher_urbain:
         opacity=0.7
     ).add_to(m)
 
-if afficher_limite:
-    folium.raster_layers.TileLayer(
-        tiles=boundary_tile_url,
-        attr="Google Earth Engine",
-        name="Limite Rabat",
-        overlay=True,
-        control=True,
-        opacity=1
-    ).add_to(m)
-
 folium.LayerControl().add_to(m)
 
 # =========================
@@ -228,9 +217,9 @@ with col2:
     st.markdown(
         """
 **Méthode**
-- Limite administrative : asset personnel GEE (`rabat_boundary_asset`)
-- Fond d’image : Sentinel-2 SR Harmonized
-- Zones urbaines : Dynamic World V1, bande **built**
+- Limite de travail : **FAO/GAUL/2015/level2** (donnée publique)
+- Fond d’image : **Sentinel-2 SR Harmonized**
+- Zones urbaines : **Dynamic World V1**, bande **built**
 - Seuil appliqué : **0.72**
 - Filtrage spatial : suppression des petits objets isolés
         """
@@ -249,10 +238,6 @@ st.markdown(
     <div style="display: flex; align-items: center; gap: 8px;">
         <div style="width: 20px; height: 20px; background-color: red;"></div>
         <span>Zones urbaines estimées</span>
-    </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
-        <div style="width: 20px; height: 20px; background-color: yellow; border: 1px solid black;"></div>
-        <span>Limite administrative de Rabat</span>
     </div>
 </div>
 """,
