@@ -15,6 +15,47 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 1.2rem;
+        padding-bottom: 1rem;
+    }
+
+    h1 {
+        margin-bottom: 0.2rem !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #f7f9fc;
+    }
+
+    div[data-testid="metric-container"] {
+        background-color: #ffffff;
+        border: 1px solid #e6eaf0;
+        padding: 14px;
+        border-radius: 12px;
+    }
+
+    .stAlert {
+        border-radius: 12px;
+    }
+
+    .custom-card {
+        background-color: #ffffff;
+        border: 1px solid #e6eaf0;
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+
+    .small-text {
+        color: #4b5563;
+        font-size: 0.95rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # =========================
 # Connexion Earth Engine
 # =========================
@@ -58,7 +99,6 @@ def initialize_earth_engine():
 
 try:
     PROJECT_ID = initialize_earth_engine()
-    st.success("Google Earth Engine connecté avec succès.")
 except Exception as e:
     st.error("Erreur de connexion à Google Earth Engine")
     st.code(str(e))
@@ -68,27 +108,28 @@ except Exception as e:
 # Titre
 # =========================
 st.title("Cartographie des zones urbaines")
-st.write("Application basée sur Google Earth Engine pour l’estimation des zones urbaines de Rabat.")
+st.markdown(
+    '<p class="small-text">Application web basée sur Google Earth Engine pour estimer les zones urbaines de Rabat.</p>',
+    unsafe_allow_html=True
+)
 
 # =========================
 # Barre latérale
 # =========================
-st.sidebar.header("Paramètres")
+st.sidebar.header("Filtres")
 
 zone_etude = st.sidebar.selectbox(
-    "Choisir la zone d'étude",
+    "Zone d'étude",
     ["Rabat"]
 )
 
 annee = st.sidebar.selectbox(
-    "Choisir l'année",
+    "Année",
     ["2024", "2023", "2022"]
 )
 
 afficher_sentinel = st.sidebar.checkbox("Afficher le fond Sentinel-2", value=True)
 afficher_urbain = st.sidebar.checkbox("Afficher les zones urbaines", value=True)
-
-st.info(f"Zone sélectionnée : {zone_etude} | Année : {annee}")
 
 # =========================
 # Zone d'étude : Rabat
@@ -206,8 +247,10 @@ if afficher_urbain:
 folium.LayerControl().add_to(m)
 
 # =========================
-# Affichage principal
+# Bloc résumé
 # =========================
+st.info(f"Zone sélectionnée : {zone_etude} | Année : {annee}")
+
 col1, col2 = st.columns([1, 2])
 
 with col1:
@@ -216,17 +259,23 @@ with col1:
 with col2:
     st.markdown(
         """
-**Méthode**
-- Limite de travail : **FAO/GAUL/2015/level2** (donnée publique)
-- Fond d’image : **Sentinel-2 SR Harmonized**
-- Zones urbaines : **Dynamic World V1**, bande **built**
-- Seuil appliqué : **0.72**
+<div class="custom-card">
+<b>Méthode</b><br><br>
+- Limite de travail : <b>FAO/GAUL/2015/level2</b> (donnée publique)<br>
+- Fond d’image : <b>Sentinel-2 SR Harmonized</b><br>
+- Zones urbaines : <b>Dynamic World V1</b>, bande <b>built</b><br>
+- Seuil appliqué : <b>0.72</b><br>
 - Filtrage spatial : suppression des petits objets isolés
-        """
+</div>
+        """,
+        unsafe_allow_html=True
     )
 
+# =========================
+# Carte
+# =========================
 st.subheader("Carte Google Earth Engine")
-st_folium(m, width=1200, height=600)
+st_folium(m, width=1200, height=650)
 
 # =========================
 # Légende
@@ -236,7 +285,7 @@ st.markdown(
     """
 <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
     <div style="display: flex; align-items: center; gap: 8px;">
-        <div style="width: 20px; height: 20px; background-color: red;"></div>
+        <div style="width: 20px; height: 20px; background-color: red; border-radius: 4px;"></div>
         <span>Zones urbaines estimées</span>
     </div>
 </div>
