@@ -31,3 +31,14 @@ Un seuil de **0.72** a été appliqué, avec un filtrage spatial pour supprimer 
 ### 1. Activer l’environnement virtuel
 ```powershell
 .\.venv\Scripts\Activate.ps1
+```
+
+### 2. Lancer l’application
+```powershell
+streamlit run app.py
+```
+
+## Remarque
+La surface urbaine affichée est une **estimation** obtenue dans Google Earth Engine.  
+Elle dépend du dataset choisi, du seuil appliqué et du filtrage utilisé.  
+Ce n’est pas une valeur cadastrale officielle.
