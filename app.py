@@ -115,8 +115,13 @@ s2_vis = {
     "max": 3000
 }
 
-s2_map = s2.getMapId(s2_vis)
-s2_tile_url = s2_map["tile_fetcher"].url_format
+try:
+    s2_map = s2.getMapId(s2_vis)
+    s2_tile_url = s2_map["tile_fetcher"].url_format
+except Exception as e:
+    st.error("Erreur exacte sur getMapId")
+    st.code(str(e))
+    st.stop()
 
 # =========================
 # Zones urbaines
