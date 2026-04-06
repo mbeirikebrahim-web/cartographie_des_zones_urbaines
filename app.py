@@ -95,7 +95,14 @@ st.info(f"Zone sélectionnée : {zone_etude} | Année : {annee}")
 # =========================
 # Zone d'étude : Rabat
 # =========================
-rabat_fc = ee.FeatureCollection("projects/projet-mbeirike/assets/rabat_boundary_asset")
+gaul2 = ee.FeatureCollection("FAO/GAUL/2015/level2")
+
+rabat_fc = (
+    gaul2
+    .filter(ee.Filter.eq("ADM0_NAME", "Morocco"))
+    .filter(ee.Filter.eq("ADM2_NAME", "Rabat"))
+)
+
 rabat = rabat_fc.geometry()
 
 # =========================
